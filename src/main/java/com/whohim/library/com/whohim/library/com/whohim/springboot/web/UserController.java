@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import static com.whohim.library.com.whohim.library.common.DateTimeUtil.isInTime;
-import static org.apache.commons.lang3.StringUtils.isBlank;
+
 
 
 /**
@@ -55,12 +55,12 @@ public class UserController {
         String nickName = user.getNickName();
         String personal = DateTimeUtil.dateToStr(new Date(), "yyyy-MM-dd HH:mm:ss") + "," + userId + "," + openId + "," + avatarUrl + "," + nickName + ",";
 
-        if (isBlank(seat) || isBlank(userId)) {
+        if (StringUtils.isBlank(seat) || StringUtils.isBlank(userId)) {
             return ServerResponse.createByErrorMessage("座位号或学号不能为空！");
         }
         String dateTimeUserIdRedis = stringRedisTemplate.opsForValue().get(seat);
 
-        if (isBlank(dateTimeUserIdRedis)) {
+        if (StringUtils.isBlank(dateTimeUserIdRedis)) {
             if (stringRedisTemplate.opsForValue().get(userId) != null) {
                 if (HVAE_SEAT.equals(stringRedisTemplate.opsForValue().get(userId))
                         || user.getOpenId().equals(stringRedisTemplate.opsForValue().get(openId))) {
@@ -97,7 +97,7 @@ public class UserController {
     @GetMapping("/markLeave/{seat}")
     @ResponseBody
     public ServerResponse getMarkLeave(@PathVariable("seat") String seat) throws Exception {
-        if (isBlank(stringRedisTemplate.opsForValue().get(seat))) {
+        if (StringUtils.isBlank(stringRedisTemplate.opsForValue().get(seat))) {
             return ServerResponse.createBySuccessMessage("该座位没人！");
         }
         String dateTimeUserId = stringRedisTemplate.opsForValue().get(seat);
