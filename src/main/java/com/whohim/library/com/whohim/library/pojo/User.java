@@ -1,8 +1,9 @@
 package com.whohim.library.com.whohim.library.pojo;
 
 
-
-
+/**
+ * @Author WhomHim
+ */
 public class User{
     private String avatarUrl;
 

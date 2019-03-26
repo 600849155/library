@@ -5,14 +5,11 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.io.*;
 
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.logging.Logger;
 
 
@@ -136,7 +133,8 @@ public class HttpUtil {
             // 读取返回数据
             in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
             String line = "";
-            boolean firstLine = true; // 读第一行不加换行符
+            // 读第一行不加换行符
+            boolean firstLine = true;
             while ((line = in.readLine()) != null) {
                 if (firstLine) {
                     firstLine = false;
@@ -180,6 +178,7 @@ public class HttpUtil {
             conn.setRequestProperty("connection", "Keep-Alive");
             conn.setRequestProperty("Accept-Charset", "utf-8");
             conn.setRequestProperty("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+            conn.setRequestProperty("Content-Tyoe","application/x-www-form-urlencoded");
             // 发送POST请求必须设置如下两行
             conn.setDoOutput(true);
             conn.setDoInput(true);
@@ -196,7 +195,7 @@ public class HttpUtil {
                 result += line;
             }
         } catch (Exception e) {
-//            log.error(e.getMessage(), e);
+            log.info(e.getMessage());
         }
         //使用finally块来关闭输出流、输入流
         finally {
@@ -243,7 +242,8 @@ public class HttpUtil {
             // 读取返回数据
             in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
             String line = "";
-            boolean firstLine = true; // 读第一行不加换行符
+            // 读第一行不加换行符
+            boolean firstLine = true;
             while ((line = in.readLine()) != null) {
                 if (firstLine) {
                     firstLine = false;
@@ -256,5 +256,14 @@ public class HttpUtil {
             e.printStackTrace();
         }
         return result;
+    }
+
+    public static void main(String[] args) {
+        Map map = new HashMap<>(4,1);
+        map.put("login_type","barcode");
+        map.put("barcode","8000467");
+        map.put("password","123456");
+        System.out.println( HttpUtil.sendPost("http://61.142.33.201:8080/opac_two/include/login_app.jsp",map));
+
     }
 }

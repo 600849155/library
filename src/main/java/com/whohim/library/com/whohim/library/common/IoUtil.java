@@ -16,7 +16,8 @@ public class IoUtil {
         StringBuffer sb = new StringBuffer();
         while ((fis.read(buf)) != -1) {
             sb.append(new String(buf));
-            buf = new byte[1024];// 重新生成，避免和上次读取的数据重复
+            // 重新生成，避免和上次读取的数据重复
+            buf = new byte[1024];
         }
         fis.close();
         System.out.println("FileInputStream已读取:" + sb);
