@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import javax.print.DocFlavor;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -104,12 +106,15 @@ public class UserController {
         Long ttlTime = stringRedisTemplate.getExpire(seat);
         logger.info(String.valueOf(ttlTime / 60.0));
         String[] strs = dateTimeUserId.split(",");
-        HashMap<String, String> res = new HashMap<>(6,1);
-        res.put("Datetime", strs[0]);
-        res.put("userId", strs[1]);
-        res.put("openId", strs[2]);
-        res.put("avatarUrl", strs[3]);
-        res.put("nickName", strs[4]);
+        HashMap<String, String> res = new HashMap<String,String>(6,1){
+            {
+                put("Datetime", strs[0]);
+                put("userId", strs[1]);
+                put("openId", strs[2]);
+                put("avatarUrl", strs[3]);
+                put("nickName", strs[4]);
+            }
+        };
         return ServerResponse.createByErrorMessage("该座位有人！", res);
     }
 
@@ -119,10 +124,13 @@ public class UserController {
         if(StringUtils.isBlank(barcode)||StringUtils.isBlank(password)){
             return ServerResponse.createByErrorMessage("读者条码或密码不能为空!");
         }
-        Map parms = new HashMap<>(4,1);
-        parms.put("login_type","barcode");
-        parms.put("barcode",barcode);
-        parms.put("password",password);
+        Map parms = new HashMap<String,String>(4,1){
+            {
+                put("login_type","barcode");
+                put("barcode",barcode);
+                put("password",password);
+            }
+        };
         String response = HttpUtil.sendPost("http://61.142.33.201:8080/opac_two/include/login_app.jsp",parms);
         if (response.equals(BIND_SUCCESS)){
              return ServerResponse.createBySuccessMessage("绑定成功！");
