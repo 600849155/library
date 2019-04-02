@@ -13,14 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import javax.print.DocFlavor;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import static com.whohim.library.com.whohim.library.common.DateTimeUtil.isInTime;
 
+import static com.whohim.library.com.whohim.library.common.DateTimeUtil.isInTime;
 
 
 /**
@@ -36,13 +34,19 @@ public class UserController {
 
     private static final String HVAE_SEAT = "1";
 
-    /** 午餐时间 **/
+    /**
+     * 午餐时间
+     **/
     private static final String LUNCH_BREAK = "11:30-12:30";
 
-    /** 晚餐时间 **/
+    /**
+     * 晚餐时间
+     **/
     private static final String DINNER_TIME = "17:00-18:00";
 
-    /** 日期格式 **/
+    /**
+     * 日期格式
+     **/
     private static final String HOUR_MINNI = "HH:mm";
 
     private static final String BIND_SUCCESS = "ok";
@@ -56,6 +60,10 @@ public class UserController {
         String avatarUrl = user.getAvatarUrl();
         String nickName = user.getNickName();
         String personal = DateTimeUtil.dateToStr(new Date(), "yyyy-MM-dd HH:mm:ss") + "," + userId + "," + openId + "," + avatarUrl + "," + nickName + ",";
+
+        if (StringUtils.isBlank(openId) || StringUtils.isBlank(avatarUrl)) {
+            return ServerResponse.createByErrorMessage("參數不能为空!");
+        }
 
         if (StringUtils.isBlank(seat) || StringUtils.isBlank(userId)) {
             return ServerResponse.createByErrorMessage("座位号或学号不能为空！");
@@ -106,7 +114,7 @@ public class UserController {
         Long ttlTime = stringRedisTemplate.getExpire(seat);
         logger.info(String.valueOf(ttlTime / 60.0));
         String[] strs = dateTimeUserId.split(",");
-        HashMap<String, String> res = new HashMap<String,String>(6,1){
+        HashMap<String, String> res = new HashMap<String, String>(6, 1) {
             {
                 put("Datetime", strs[0]);
                 put("userId", strs[1]);
@@ -120,20 +128,20 @@ public class UserController {
 
     @PostMapping("/user/bindLibrary")
     @ResponseBody
-    public ServerResponse bindLibrary(@RequestParam(name = "barcode")String barcode,@RequestParam(name = "password")String password){
-        if(StringUtils.isBlank(barcode)||StringUtils.isBlank(password)){
+    public ServerResponse bindLibrary(@RequestParam(name = "barcode") String barcode, @RequestParam(name = "password") String password) {
+        if (StringUtils.isBlank(barcode) || StringUtils.isBlank(password)) {
             return ServerResponse.createByErrorMessage("读者条码或密码不能为空!");
         }
-        Map parms = new HashMap<String,String>(4,1){
+        Map parms = new HashMap<String, String>(4, 1) {
             {
-                put("login_type","barcode");
-                put("barcode",barcode);
-                put("password",password);
+                put("login_type", "barcode");
+                put("barcode", barcode);
+                put("password", password);
             }
         };
-        String response = HttpUtil.sendPost("http://61.142.33.201:8080/opac_two/include/login_app.jsp",parms);
-        if (response.equals(BIND_SUCCESS)){
-             return ServerResponse.createBySuccessMessage("绑定成功！");
+        String response = HttpUtil.sendPost("http://61.142.33.201:8080/opac_two/include/login_app.jsp", parms);
+        if (response.equals(BIND_SUCCESS)) {
+            return ServerResponse.createBySuccessMessage("绑定成功！");
         }
         return ServerResponse.createByErrorMessage("绑定失败！");
     }
@@ -144,18 +152,18 @@ public class UserController {
         //微信端登录code值
         String wxCode = code;
         //请求地址 https://api.weixin.qq.com/sns/jscode2session
-        String requestUrl = "https://api.weixin.qq.com/sns/jscode2session"; 
-        Map<String, String> requestUrlParam = new HashMap<>(5,1);
+        String requestUrl = "https://api.weixin.qq.com/sns/jscode2session";
+        Map<String, String> requestUrlParam = new HashMap<>(5, 1);
         //开发者设置中的appId
         requestUrlParam.put("appid", "wx4a326c92f0674dd7");
         //开发者设置中的appSecret
-        requestUrlParam.put("secret", "0323d6209b119f50f86cb1c19d979752");
+        requestUrlParam.put("secret", "c7bc37c888cf10b18f16260ce33a889b");
         //小程序调用wx.login返回的code
         requestUrlParam.put("js_code", wxCode);
         //默认参数
         requestUrlParam.put("grant_type", "authorization_code");
         //发送post请求读取调用微信 https://api.weixin.qq.com/sns/jscode2session 接口获取openid用户唯一标识
-        JSONObject jsonObject = JSON.parseObject(HttpUtil.sendPost(requestUrl, requestUrlParam)); 
+        JSONObject jsonObject = JSON.parseObject(HttpUtil.sendPost(requestUrl, requestUrlParam));
         logger.info(jsonObject.toString());
         return jsonObject;
     }
