@@ -2,10 +2,12 @@ package com.whohim.library.com.whohim.library.com.whohim.springboot.web;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.whohim.library.com.whohim.library.common.DateTimeUtil;
-import com.whohim.library.com.whohim.library.common.HttpUtil;
+import com.whohim.library.com.whohim.library.pojo.UserInfo;
+import com.whohim.library.com.whohim.library.util.DateTimeUtil;
+import com.whohim.library.com.whohim.library.util.HttpUtil;
 import com.whohim.library.com.whohim.library.common.ServerResponse;
 import com.whohim.library.com.whohim.library.pojo.User;
+import com.whohim.library.com.whohim.library.util.JsonUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,12 +16,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.whohim.library.com.whohim.library.common.DateTimeUtil.isInTime;
+import static com.whohim.library.com.whohim.library.util.DateTimeUtil.isInTime;
 
 
 /**
@@ -69,6 +69,9 @@ public class UserController {
      **/
     private static final int NICKNAME = 4;
 
+    /** 存进redis的user_info表 **/
+    private static final String USER_INFO = "user_info";
+
     @PostMapping("/markLeave/")
     @ResponseBody
     public ServerResponse postMarkLeave(User user) throws Exception {
@@ -89,7 +92,7 @@ public class UserController {
             if (stringRedisTemplate.opsForValue().get(userId) != null) {
                 if (HVAE_SEAT.equals(stringRedisTemplate.opsForValue().get(userId))
                         || user.getOpenId().equals(stringRedisTemplate.opsForValue().get(openId))) {
-                    return ServerResponse.createByErrorMessage("同学，一个人只能留一个位哦！");
+                    return ServerResponse.createByErrorMessage("只能留一个位哦！");
                 }
             }
             if (isInTime(LUNCH_BREAK, DateTimeUtil.dateToStr(new Date(), HOUR_MINNI))) {
@@ -165,10 +168,26 @@ public class UserController {
 
     @PostMapping("/user/bindLibrary")
     @ResponseBody
-    public ServerResponse bindLibrary(@RequestParam(name = "barcode") String barcode, @RequestParam(name = "password") String password) {
-        if (StringUtils.isBlank(barcode) || StringUtils.isBlank(password)) {
-            return ServerResponse.createByErrorMessage("读者条码或密码不能为空!");
+    public ServerResponse bindLibrary(@RequestParam("openId") String openId,
+                                      @RequestParam(name = "barcode") String barcode,
+                                      @RequestParam(name = "password") String password) {
+        if (StringUtils.isBlank(barcode) || StringUtils.isBlank(password) || StringUtils.isBlank(openId)) {
+            return ServerResponse.createByErrorMessage("借阅卡卡号或密码不能为空!");
         }
+
+        /* 初始化user_info表 */
+        if (StringUtils.isBlank(stringRedisTemplate.opsForValue().get(USER_INFO))){
+            UserInfo userInfo = new UserInfo();
+            List<User>userList = new ArrayList<>();
+            User user = new User();
+            user.setBarcode("123456");
+            user.setOpenId("asd1223asd");
+            userList.add(user);
+            userInfo.setUserList(userList);
+            stringRedisTemplate.opsForValue().set(USER_INFO, JsonUtil.obj2StringPretty(userInfo));
+            logger.info("user_info表初始化成功！");
+        }
+
         Map parms = new HashMap<String, String>(4, 1) {
             {
                 put("login_type", "barcode");
@@ -178,6 +197,26 @@ public class UserController {
         };
         String response = HttpUtil.sendPost("http://61.142.33.201:8080/opac_two/include/login_app.jsp", parms);
         if (response.equals(BIND_SUCCESS)) {
+            UserInfo userInfo = JsonUtil.string2Obj(stringRedisTemplate.opsForValue().get(USER_INFO),UserInfo.class);
+            List<User>userList= userInfo.getUserList();
+            /* openId和barcode是一对一关系 判断是否被绑定过 */
+            for (User user : userList) {
+                if (user.getBarcode().equals(barcode)) {
+                    if (user.getOpenId().equals(openId)) {
+                        return ServerResponse.createByErrorMessage("您已绑定过了！");
+                    }
+                }
+                if (user.getOpenId().equals(openId)) {
+                    return ServerResponse.createByErrorMessage("该借阅卡已绑定！");
+                }
+            }
+            /* 没有被绑定过则添加进redis里 */
+            User user = new User();
+            user.setBarcode(barcode);
+            user.setOpenId(openId);
+            userList.add(user);
+            userInfo.setUserList(userList);
+            stringRedisTemplate.opsForValue().set(USER_INFO, JsonUtil.obj2StringPretty(userInfo));
             return ServerResponse.createBySuccessMessage("绑定成功！");
         }
         return ServerResponse.createByErrorMessage("绑定失败！");

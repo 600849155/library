@@ -1,4 +1,4 @@
-package com.whohim.library.com.whohim.library.common;
+package com.whohim.library.com.whohim.library.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;

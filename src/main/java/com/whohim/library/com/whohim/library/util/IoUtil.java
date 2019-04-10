@@ -1,4 +1,4 @@
-package com.whohim.library.com.whohim.library.common;
+package com.whohim.library.com.whohim.library.util;
 
 import java.io.*;
 

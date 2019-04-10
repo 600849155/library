@@ -1,4 +1,4 @@
-package com.whohim.library.com.whohim.library.common;
+package com.whohim.library.com.whohim.library.util;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -9,7 +9,6 @@ import java.util.*;
 import java.io.*;
 
 import java.net.URLConnection;
-import java.text.SimpleDateFormat;
 import java.util.logging.Logger;
 
 
