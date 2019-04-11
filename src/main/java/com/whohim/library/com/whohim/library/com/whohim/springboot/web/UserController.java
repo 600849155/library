@@ -36,7 +36,7 @@ public class UserController {
     private StringRedisTemplate stringRedisTemplate;
 
 
-    @PostMapping("/markLeave/")
+    @PostMapping("/user/markLeave/")
     @ResponseBody
     public ServerResponse postMarkLeave(User user) throws Exception {
         /* 这个是卡号 */
@@ -86,7 +86,7 @@ public class UserController {
         return ServerResponse.createByErrorMessage("留座失败！");
     }
 
-    @GetMapping("/markLeave/{seat}")
+    @GetMapping("/user/markLeave/{seat}")
     @ResponseBody
     public ServerResponse getMarkLeave(@PathVariable("seat") String seat) throws Exception {
         if (StringUtils.isBlank(stringRedisTemplate.opsForValue().get(seat))) {
@@ -108,7 +108,7 @@ public class UserController {
         return ServerResponse.createByErrorMessage("该座位有人！", res);
     }
 
-    @PostMapping("/cancelSeat/")
+    @PostMapping("/user/cancelSeat/")
     @ResponseBody
     public ServerResponse cancelSeat(@RequestParam("seat") String seat, @RequestParam("openId") String openId) {
         if (StringUtils.isBlank(seat) || StringUtils.isBlank(openId)) {
