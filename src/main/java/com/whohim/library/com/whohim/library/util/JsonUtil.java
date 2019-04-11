@@ -113,11 +113,8 @@ public class JsonUtil {
         //{"name":"Geely","id":666}
         String json = "{\"name\":\"Geely\",\"color\":\"blue\",\"id\":666}";
         User testPojoObject = JsonUtil.string2Obj(json,User.class);
-
         String testPojoJson = JsonUtil.obj2String(user);
         log.info("testPojoJson:{}",testPojoJson);
-
-        log.info("end");
 
         User user2 = new User();
         user.setId(2);
@@ -125,45 +122,13 @@ public class JsonUtil {
         String userJsonPretty = JsonUtil.obj2StringPretty(user2);
         log.info("userJson:{}",userJsonPretty);
 
-
-//        User u2 = new User();
-//        u2.setId(2);
-//        u2.setEmail("geelyu2@happymmall.com");
-//
-//
-//
         String user1Json = JsonUtil.obj2String(user2);
-
         String user1JsonPretty = JsonUtil.obj2StringPretty(user2);
-
         log.info("user1Json:{}",user1Json);
-
         log.info("user1JsonPretty:{}",user1JsonPretty);
-//
-//
         User user3 = JsonUtil.string2Obj(user1Json,User.class);
         System.out.println(user3);
-//
-//
-//        List<User> userList = Lists.newArrayList();
-//        userList.add(u1);
-//        userList.add(u2);
-//
-//        String userListStr = JsonUtil.obj2StringPretty(userList);
-//
-//        log.info("==================");
-//
-//        log.info(userListStr);
-//
-//
-//        List<User> userListObj1 = JsonUtil.string2Obj(userListStr, new TypeReference<List<User>>() {
-//        });
-//
-//
-//        List<User> userListObj2 = JsonUtil.string2Obj(userListStr,List.class,User.class);
-
         System.out.println("end");
-
     }
 
 

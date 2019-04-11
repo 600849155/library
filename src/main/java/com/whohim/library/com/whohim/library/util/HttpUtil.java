@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 
 /**
- * http请求工具
+ * @Author: WhomHim
  */
 public class HttpUtil {
     private static Logger log = Logger.getLogger(String.valueOf(HttpUtil.class));

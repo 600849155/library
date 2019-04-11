@@ -10,17 +10,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Created by geely
+ * @Author: WhomHim
  */
 public class DateTimeUtil {
 
-    //joda-time
-
-    //str->Date
-    //Date->str
     public static final String STANDARD_FORMAT = "yyyy-MM-dd HH:mm:ss";
-
-
 
     public static Date strToDate(String dateTimeStr,String formatStr){
         DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(formatStr);
@@ -73,7 +67,7 @@ public class DateTimeUtil {
             long now = sdf.parse(curTime).getTime();
             long start = sdf.parse(args[0]).getTime();
             long end = sdf.parse(args[1]).getTime();
-            if (args[1].equals("00:00")) {
+            if (("00:00").equals(args[1])) {
                 args[1] = "24:00";
             }
             if (end < start) {

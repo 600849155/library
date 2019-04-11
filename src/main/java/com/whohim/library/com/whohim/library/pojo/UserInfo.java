@@ -2,7 +2,8 @@ package com.whohim.library.com.whohim.library.pojo;
 
 import lombok.*;
 
-import java.util.List;
+
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @Author:WhomHim
@@ -16,5 +17,5 @@ import java.util.List;
 @Getter
 @Setter
 public class UserInfo {
-    private List<User>userList;
+    private CopyOnWriteArrayList<User> userList;
 }

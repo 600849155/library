@@ -2,15 +2,18 @@ package com.whohim.library.com.whohim.library.util;
 
 import java.io.*;
 
-
+/**
+ * @Author: WhomHim
+ */
 public class IoUtil {
     /**
      * 利用FileInputStream读取文件(字节流)
      */
-    public static String FileInputStream(String path) throws IOException {
+    public static String fileInputStream(String path) throws IOException {
         File file = new File(path);
-        if (!file.exists() || file.isDirectory())
+        if (!file.exists() || file.isDirectory()) {
             throw new FileNotFoundException();
+        }
         FileInputStream fis = new FileInputStream(file);
         byte[] buf = new byte[1024];
         StringBuffer sb = new StringBuffer();
@@ -31,10 +34,11 @@ public class IoUtil {
      * @return
      * @throws IOException
      */
-    public static String BufferedReader(String path) throws IOException {
+    public static String bufferedReader(String path) throws IOException {
         File file = new File(path);
-        if (!file.exists() || file.isDirectory())
+        if (!file.exists() || file.isDirectory()){
             throw new FileNotFoundException();
+        }
         BufferedReader br = new BufferedReader(new FileReader(file));
         String temp = null;
         StringBuffer sb = new StringBuffer();
@@ -55,7 +59,7 @@ public class IoUtil {
      * @param
      */
 
-    public static void PrintStream(String path, String context) {
+    public static void printStream(String path, String context) {
         try {
             FileOutputStream out = new FileOutputStream(path);
             PrintStream p = new PrintStream(out);
@@ -67,10 +71,11 @@ public class IoUtil {
         }
     }
 
-    public static void StringBuffer(String path, String context) throws IOException {
+    public static void stringBuffer(String path, String context) throws IOException {
         File file = new File(path);
-        if (!file.exists())
+        if (!file.exists()){
             file.createNewFile();
+        }
         FileOutputStream out = new FileOutputStream(file, true);
         StringBuffer sb = new StringBuffer();
         sb.append(context);
@@ -108,8 +113,9 @@ public class IoUtil {
      * @param path
      */
     public static void deleteAllFilesOfDir(File path) {
-        if (!path.exists())
+        if (!path.exists()){
             return;
+        }
         if (path.isFile()) {
             path.delete();
             return;

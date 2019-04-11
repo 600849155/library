@@ -17,8 +17,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
+import static com.whohim.library.com.whohim.library.common.Constant.*;
 import static com.whohim.library.com.whohim.library.util.DateTimeUtil.isInTime;
 
 
@@ -33,44 +35,6 @@ public class UserController {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
-    private static final String HVAE_SEAT = "1";
-    /**
-     * 午餐时间
-     **/
-    private static final String LUNCH_BREAK = "11:30-12:30";
-    /**
-     * 晚餐时间
-     **/
-    private static final String DINNER_TIME = "17:00-18:00";
-    /**
-     * 日期格式
-     **/
-    private static final String HOUR_MINNI = "HH:mm";
-
-    private static final String BIND_SUCCESS = "ok";
-    /**
-     * 留座时间
-     **/
-    private static final int DATE_TIME = 0;
-    /**
-     * 图书证号
-     **/
-    private static final int USER_ID = 1;
-    /**
-     * openId
-     **/
-    private static final int OPEN_ID = 2;
-    /**
-     * 头像
-     **/
-    private static final int AVATARURL = 3;
-    /**
-     * 昵称
-     **/
-    private static final int NICKNAME = 4;
-
-    /** 存进redis的user_info表 **/
-    private static final String USER_INFO = "user_info";
 
     @PostMapping("/markLeave/")
     @ResponseBody
@@ -144,7 +108,7 @@ public class UserController {
         return ServerResponse.createByErrorMessage("该座位有人！", res);
     }
 
-    @PostMapping("/canceSeat/")
+    @PostMapping("/cancelSeat/")
     @ResponseBody
     public ServerResponse cancelSeat(@RequestParam("seat") String seat, @RequestParam("openId") String openId) {
         if (StringUtils.isBlank(seat) || StringUtils.isBlank(openId)) {
@@ -176,9 +140,9 @@ public class UserController {
         }
 
         /* 初始化user_info表 */
-        if (StringUtils.isBlank(stringRedisTemplate.opsForValue().get(USER_INFO))){
+        if (StringUtils.isBlank(stringRedisTemplate.opsForValue().get(USER_INFO))) {
             UserInfo userInfo = new UserInfo();
-            List<User>userList = new ArrayList<>();
+            CopyOnWriteArrayList<User> userList = new CopyOnWriteArrayList<>();
             User user = new User();
             user.setBarcode("123456");
             user.setOpenId("asd1223asd");
@@ -197,18 +161,14 @@ public class UserController {
         };
         String response = HttpUtil.sendPost("http://61.142.33.201:8080/opac_two/include/login_app.jsp", parms);
         if (response.equals(BIND_SUCCESS)) {
-            UserInfo userInfo = JsonUtil.string2Obj(stringRedisTemplate.opsForValue().get(USER_INFO),UserInfo.class);
-            List<User>userList= userInfo.getUserList();
+            UserInfo userInfo = JsonUtil.string2Obj(stringRedisTemplate.opsForValue().get(USER_INFO), UserInfo.class);
+            CopyOnWriteArrayList<User> userList = userInfo.getUserList();
             /* openId和barcode是一对一关系 判断是否被绑定过 */
-            for (User user : userList) {
-                if (user.getBarcode().equals(barcode)) {
-                    if (user.getOpenId().equals(openId)) {
-                        return ServerResponse.createByErrorMessage("您已绑定过了！");
-                    }
-                }
-                if (user.getOpenId().equals(openId)) {
-                    return ServerResponse.createByErrorMessage("该借阅卡已绑定！");
-                }
+            if (userList.stream().anyMatch(user -> user.getOpenId().equals(openId) && user.getBarcode().equals(barcode))) {
+                return ServerResponse.createByErrorMessage("您已绑定过了！");
+            }
+            if (userList.stream().anyMatch((user) -> user.getBarcode().equals(barcode))) {
+                return ServerResponse.createByErrorMessage("该借阅卡已被他人绑定！");
             }
             /* 没有被绑定过则添加进redis里 */
             User user = new User();
@@ -222,7 +182,36 @@ public class UserController {
         return ServerResponse.createByErrorMessage("绑定失败！");
     }
 
-    @PostMapping("/user/get_sessionkey/")
+    @PostMapping("/user/cancelBindLibrary")
+    @ResponseBody
+    public ServerResponse cancleBindLibrary(@RequestParam("openId") String openId, @RequestParam(name = "barcode") String barcode) {
+        if (StringUtils.isBlank(barcode) || StringUtils.isBlank(openId)) {
+            return ServerResponse.createByErrorMessage("传值不能为空!");
+        }
+        /* 从redis拿整个表出来 */
+        UserInfo userInfo = JsonUtil.string2Obj(stringRedisTemplate.opsForValue().get(USER_INFO), UserInfo.class);
+        if (userInfo == null) {
+            return ServerResponse.createByErrorMessage("user_info未初始化！");
+        }
+        CopyOnWriteArrayList<User> userList = userInfo.getUserList();
+        /* 如果redis有存到对应的借阅卡和用户信息则删除 */
+        for (User user : userList) {
+            if (user.getBarcode().equals(barcode) && user.getOpenId().equals(openId)) {
+                userList.remove(user);
+                /* 删除之后再将整个表放进redis */
+                userInfo.setUserList(userList);
+                try {
+                    stringRedisTemplate.opsForValue().set(USER_INFO, JsonUtil.obj2StringPretty(userInfo));
+                } catch (Exception e) {
+                    return ServerResponse.createByErrorMessage("取消绑定失败！");
+                }
+                return ServerResponse.createBySuccessMessage("取消绑定成功！");
+            }
+        }
+        return ServerResponse.createBySuccessMessage("取消绑定失败！");
+    }
+
+    @PostMapping("/user/getSessionkey/")
     @ResponseBody
     public JSONObject getSessionKeyOropenId(String code) {
         //微信端登录code值
