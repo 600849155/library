@@ -147,7 +147,7 @@ public class UserController {
             user.setBarcode("123456");
             user.setOpenId("asd1223asd");
             userList.add(user);
-            userInfo.setUserList(userList);
+            userInfo.setUserInfo(userList);
             stringRedisTemplate.opsForValue().set(USER_INFO, JsonUtil.obj2StringPretty(userInfo));
             logger.info("user_info表初始化成功！");
         }
@@ -162,7 +162,7 @@ public class UserController {
         String response = HttpUtil.sendPost("http://61.142.33.201:8080/opac_two/include/login_app.jsp", parms);
         if (response.equals(BIND_SUCCESS)) {
             UserInfo userInfo = JsonUtil.string2Obj(stringRedisTemplate.opsForValue().get(USER_INFO), UserInfo.class);
-            CopyOnWriteArrayList<User> userList = userInfo.getUserList();
+            CopyOnWriteArrayList<User> userList = userInfo.getUserInfo();
             /* openId和barcode是一对一关系 判断是否被绑定过 */
             if (userList.stream().anyMatch(user -> user.getOpenId().equals(openId) && user.getBarcode().equals(barcode))) {
                 return ServerResponse.createByErrorMessage("您已绑定过了！");
@@ -175,7 +175,7 @@ public class UserController {
             user.setBarcode(barcode);
             user.setOpenId(openId);
             userList.add(user);
-            userInfo.setUserList(userList);
+            userInfo.setUserInfo(userList);
             stringRedisTemplate.opsForValue().set(USER_INFO, JsonUtil.obj2StringPretty(userInfo));
             return ServerResponse.createBySuccessMessage("绑定成功！");
         }
@@ -193,13 +193,13 @@ public class UserController {
         if (userInfo == null) {
             return ServerResponse.createByErrorMessage("user_info未初始化！");
         }
-        CopyOnWriteArrayList<User> userList = userInfo.getUserList();
+        CopyOnWriteArrayList<User> userList = userInfo.getUserInfo();
         /* 如果redis有存到对应的借阅卡和用户信息则删除 */
         for (User user : userList) {
             if (user.getBarcode().equals(barcode) && user.getOpenId().equals(openId)) {
                 userList.remove(user);
                 /* 删除之后再将整个表放进redis */
-                userInfo.setUserList(userList);
+                userInfo.setUserInfo(userList);
                 try {
                     stringRedisTemplate.opsForValue().set(USER_INFO, JsonUtil.obj2StringPretty(userInfo));
                 } catch (Exception e) {

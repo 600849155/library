@@ -17,5 +17,5 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Getter
 @Setter
 public class UserInfo {
-    private CopyOnWriteArrayList<User> userList;
+    private CopyOnWriteArrayList<User> userInfo;
 }
