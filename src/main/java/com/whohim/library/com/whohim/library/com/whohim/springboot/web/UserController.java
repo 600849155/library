@@ -26,7 +26,7 @@ import static com.whohim.library.com.whohim.library.util.JsonUtil.obj2StringPret
 
 
 /**
- * @author: WhomHim
+ * @author WhomHim
  */
 
 @Controller
