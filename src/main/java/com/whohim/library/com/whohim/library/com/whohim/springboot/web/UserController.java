@@ -26,7 +26,7 @@ import static com.whohim.library.com.whohim.library.util.JsonUtil.obj2StringPret
 
 
 /**
- * @Author: WhomHim
+ * @author: WhomHim
  */
 
 @Controller
@@ -40,8 +40,9 @@ public class UserController {
 
     @PostMapping("/user/markLeave/")
     @ResponseBody
-    public ServerResponse postMarkLeave(User user) throws Exception {
-        String barcode = user.getBarcode();
+    public ServerResponse postMarkLeave(User user,String userId) throws Exception {
+        /* 迁就前端的不规范写法 */
+        String barcode = userId;
         String seat = user.getSeat();
         String openId = user.getOpenId();
         String avatarUrl = user.getAvatarUrl();
@@ -98,7 +99,7 @@ public class UserController {
         HashMap<String, String> res = new HashMap<String, String>(6, 1) {
             {
                 put("Datetime", detailInfo[DATE_TIME]);
-                put("barcode", detailInfo[BARCOCE]);
+                put("userId", detailInfo[BARCOCE]);
                 put("openId", detailInfo[OPEN_ID]);
                 put("avatarUrl", detailInfo[AVATARURL]);
                 put("nickName", detailInfo[NICKNAME]);
