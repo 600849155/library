@@ -103,6 +103,7 @@ public class UserController {
                 put("openId", detailInfo[OPEN_ID]);
                 put("avatarUrl", detailInfo[AVATARURL]);
                 put("nickName", detailInfo[NICKNAME]);
+                put("seat", seat);
             }
         };
         return ServerResponse.createByErrorMessage("该座位有人！", res);
@@ -152,7 +153,7 @@ public class UserController {
             logger.info("user_info表初始化成功！");
         }
 
-        Map parms = new HashMap<String, String>(4, 1) {
+        Map<String, String> parms = new HashMap<String, String>(4, 1) {
             {
                 put("login_type", "barcode");
                 put("barcode", barcode);
@@ -167,7 +168,7 @@ public class UserController {
             if (userList.stream().anyMatch(user -> user.getOpenId().equals(openId) && user.getBarcode().equals(barcode))) {
                 return ServerResponse.createByErrorMessage("您已绑定过了！");
             }
-            if (userList.stream().anyMatch((user) -> user.getBarcode().equals(barcode))) {
+            if (userList.stream().anyMatch(user -> user.getBarcode().equals(barcode))) {
                 return ServerResponse.createByErrorMessage("该借阅卡已被他人绑定！");
             }
             /* 没有被绑定过则添加进redis里 */
