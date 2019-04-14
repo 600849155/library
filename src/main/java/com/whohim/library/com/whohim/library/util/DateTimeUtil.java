@@ -93,12 +93,12 @@ public class DateTimeUtil {
 
     /**
      * 得到一定延时之后的时间戳
-     * @param time 想要延迟的时间
+     * @param time 想要延迟的时间(单位秒)
      * @return
      */
     public static String getTime(int time){
         Long currentTime = System.currentTimeMillis();
-        currentTime += time * 60 * 1000;
+        currentTime += time  * 1000;
         Date date = new Date(currentTime);
         return DateTimeUtil.dateToStr(date,"yyyy-MM-dd HH:mm:ss");
     }
@@ -109,7 +109,6 @@ public class DateTimeUtil {
 //        System.out.println(DateTimeUtil.dateToStr(new Date(),"yyyy-MM-dd HH:mm:ss"));
 //        System.out.println(isInTime("20:00-01:00", DateTimeUtil.dateToStr(new Date(),"HH:mm")));
 //        System.out.println(DateTimeUtil.strToDate("2010-01-01 11:11:11","yyyy-MM-dd HH:mm:ss"));
-
     }
 
 

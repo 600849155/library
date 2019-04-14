@@ -29,7 +29,7 @@ public class Constant {
     /**
      * 图书证号
      **/
-    public static final int USER_ID = 1;
+    public static final int BARCOCE = 1;
     /**
      * openId
      **/
