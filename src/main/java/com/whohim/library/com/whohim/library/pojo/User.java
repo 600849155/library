@@ -14,13 +14,18 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 @Setter
 
 public class User{
+
+    @JsonIgnore
     private String avatarUrl;
 
+    @JsonIgnore
     private String nickName;
 
     private String openId;
 
+    @JsonIgnore
     private String userId;
+
     @JsonIgnore
     private int id;
 
