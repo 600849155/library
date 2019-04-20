@@ -19,10 +19,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.whohim.library.com.whohim.library.common.Constant.*;
 import static com.whohim.library.com.whohim.library.util.DateTimeUtil.isInTime;
-import static com.whohim.library.com.whohim.library.util.JsonUtil.obj2StringPretty;
 
 
 /**
@@ -30,6 +30,7 @@ import static com.whohim.library.com.whohim.library.util.JsonUtil.obj2StringPret
  */
 
 @Controller
+@RequestMapping("/user")
 public class UserController {
 
     private static Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -38,9 +39,9 @@ public class UserController {
     private StringRedisTemplate stringRedisTemplate;
 
 
-    @PostMapping("/user/markLeave/")
+    @PostMapping("/markLeave")
     @ResponseBody
-    public ServerResponse postMarkLeave(User user,String userId) throws Exception {
+    public ServerResponse postMarkLeave(User user, String userId) throws Exception {
         /* 迁就前端的不规范写法 */
         String barcode = userId;
         String seat = user.getSeat();
@@ -54,6 +55,15 @@ public class UserController {
         }
 
         String userInfo = stringRedisTemplate.opsForValue().get(seat);
+        String[] detailInfo = userInfo.split(",");
+
+        if (detailInfo[BARCOCE].equals(barcode) || stringRedisTemplate.opsForValue().get(barcode) != null) {
+            return ServerResponse.createByErrorCodeMessage(2, "已经留座，请不要重复留座！");
+        }
+        if (stringRedisTemplate.opsForValue().get(seat) != null) {
+            return ServerResponse.createByErrorMessage("该座位有人！");
+        }
+
         if (StringUtils.isBlank(userInfo)) {
             if (stringRedisTemplate.opsForValue().get(barcode) != null) {
                 if (HVAE_SEAT.equals(stringRedisTemplate.opsForValue().get(barcode))
@@ -69,18 +79,11 @@ public class UserController {
             }
             return setStringBySeatAndBarcode(user, personal, 30);
         }
-        String[] detailInfo = userInfo.split(",");
 
-        if (detailInfo[BARCOCE].equals(barcode)) {
-            return ServerResponse.createByErrorCodeMessage(2, "已经留座，请不要重复留座！");
-        }
-        if (stringRedisTemplate.opsForValue().get(seat) != null) {
-            return ServerResponse.createByErrorMessage("该座位有人！");
-        }
         return ServerResponse.createByErrorMessage("留座失败！");
     }
 
-    @GetMapping("/user/markLeave/{seat}")
+    @GetMapping("/markLeave/{seat}")
     @ResponseBody
     public ServerResponse getMarkLeave(@PathVariable("seat") String seat) throws Exception {
         if (StringUtils.isBlank(seat)) {
@@ -96,7 +99,7 @@ public class UserController {
         }
         String ttlTime = DateTimeUtil.getTime(ttl);
         String[] detailInfo = userInfo != null ? userInfo.split(",") : new String[0];
-        HashMap<String, String> res = new HashMap<String, String>(6, 1) {
+        HashMap<String, String> res = new HashMap<String, String>(8, 1) {
             {
                 put("Datetime", detailInfo[DATE_TIME]);
                 put("userId", detailInfo[BARCOCE]);
@@ -110,7 +113,48 @@ public class UserController {
         return ServerResponse.createByErrorMessage("该座位有人！", res);
     }
 
-    @PostMapping("/user/cancelSeat/")
+    @PostMapping("/checkOneselfSeat")
+    @ResponseBody
+    public ServerResponse checkOneselfSeat(@RequestParam("openId") String openId) {
+        if (StringUtils.isBlank(openId)) {
+            return ServerResponse.createByErrorMessage("传值不能为空!");
+        }
+        /* 从redis拿整个表出来 */
+        UserInfo userInfo = JsonUtil.string2Obj(stringRedisTemplate.opsForValue().get(USER_INFO), UserInfo.class);
+        if (userInfo == null) {
+            return ServerResponse.createByErrorMessage("user_info未初始化！");
+        }
+        CopyOnWriteArrayList<User> userList = userInfo.getUserInfo();
+        AtomicReference<String> barcode = new AtomicReference<>();
+        userList.stream().filter(user -> user.getOpenId().equals(openId)).map(User::getBarcode).forEach(barcode::set);
+        String onselfSeatInfo = stringRedisTemplate.opsForValue().get(barcode.get());
+        String[] detailInfo = new String[0];
+        if (onselfSeatInfo != null) {
+            detailInfo = onselfSeatInfo.split(",");
+        }
+        if (onselfSeatInfo == null) {
+            return ServerResponse.createByErrorMessage("尚未留座！");
+        }
+        int ttl = 0;
+        if (stringRedisTemplate.getExpire(barcode.get()) != null) {
+            ttl = Math.toIntExact(stringRedisTemplate.getExpire(barcode.get()));
+        }
+        String ttlTime = DateTimeUtil.getTime(ttl);
+        String[] finalDetailInfo = detailInfo;
+        HashMap<String, String> res = new HashMap<String, String>(8, 1) {
+            {
+                put("Datetime", finalDetailInfo[DATE_TIME]);
+                put("userId", finalDetailInfo[BARCOCE]);
+                put("openId", finalDetailInfo[OPEN_ID]);
+                put("avatarUrl", finalDetailInfo[AVATARURL]);
+                put("nickName", finalDetailInfo[NICKNAME]);
+                put("ttlTime", String.valueOf(ttlTime));
+            }
+        };
+        return ServerResponse.createBySuccess(res);
+    }
+
+    @PostMapping("/cancelSeat")
     @ResponseBody
     public ServerResponse cancelSeat(@RequestParam("seat") String seat, @RequestParam("openId") String openId) {
         if (StringUtils.isBlank(seat) || StringUtils.isBlank(openId)) {
@@ -131,26 +175,13 @@ public class UserController {
     }
 
 
-    @PostMapping("/user/bindLibrary")
+    @PostMapping("/bindLibrary")
     @ResponseBody
     public ServerResponse bindLibrary(@RequestParam("openId") String openId,
                                       @RequestParam(name = "barcode") String barcode,
                                       @RequestParam(name = "password") String password) {
         if (StringUtils.isBlank(barcode) || StringUtils.isBlank(password) || StringUtils.isBlank(openId)) {
             return ServerResponse.createByErrorMessage("借阅卡卡号或密码不能为空!");
-        }
-
-        /* 初始化user_info表 */
-        if (StringUtils.isBlank(stringRedisTemplate.opsForValue().get(USER_INFO))) {
-            UserInfo userInfo = new UserInfo();
-            CopyOnWriteArrayList<User> userList = new CopyOnWriteArrayList<>();
-            User user = new User();
-            user.setBarcode("123456");
-            user.setOpenId("asd1223asd");
-            userList.add(user);
-            userInfo.setUserInfo(userList);
-            stringRedisTemplate.opsForValue().set(USER_INFO, obj2StringPretty(userInfo));
-            logger.info("user_info表初始化成功！");
         }
 
         Map<String, String> parms = new HashMap<String, String>(4, 1) {
@@ -193,7 +224,7 @@ public class UserController {
         return ServerResponse.createByErrorMessage("绑定失败！");
     }
 
-    @PostMapping("/user/cancelBindLibrary")
+    @PostMapping("/cancelBindLibrary")
     @ResponseBody
     public ServerResponse cancleBindLibrary(@RequestParam("openId") String openId, @RequestParam(name = "barcode") String barcode) {
         if (StringUtils.isBlank(barcode) || StringUtils.isBlank(openId)) {
@@ -212,7 +243,7 @@ public class UserController {
                 /* 删除之后再将整个表放进redis */
                 userInfo.setUserInfo(userList);
                 try {
-                    stringRedisTemplate.opsForValue().set(USER_INFO, obj2StringPretty(userInfo));
+                    stringRedisTemplate.opsForValue().set(USER_INFO, JsonUtil.obj2StringPretty(userInfo));
                 } catch (Exception e) {
                     return ServerResponse.createByErrorMessage("取消绑定失败！");
                 }
@@ -222,7 +253,7 @@ public class UserController {
         return ServerResponse.createBySuccessMessage("取消绑定失败！");
     }
 
-    @PostMapping("/user/getSessionkey/")
+    @PostMapping("/getSessionkey")
     @ResponseBody
     public JSONObject getSessionKeyOropenId(String code) {
         //请求地址 https://api.weixin.qq.com/sns/jscode2session
@@ -255,7 +286,7 @@ public class UserController {
             /* 向redis里存入数据和设置缓存时间 */
             stringRedisTemplate.opsForValue().set(user.getSeat(), personal, 60 * time, TimeUnit.SECONDS);
             /* 用于判断此借阅卡是否留两个座位 */
-            stringRedisTemplate.opsForValue().set(user.getBarcode(), HVAE_SEAT, 60 * time, TimeUnit.SECONDS);
+            stringRedisTemplate.opsForValue().set(user.getUserId(), personal, 60 * time, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             return ServerResponse.createByErrorMessage("留座失败！");
