@@ -41,7 +41,7 @@ public class UserController {
 
     @PostMapping("/markLeave")
     @ResponseBody
-    public ServerResponse postMarkLeave(User user,String userId) throws Exception {
+    public ServerResponse postMarkLeave(User user, String userId) throws Exception {
         /* 迁就前端的不规范写法 */
         String barcode = userId;
         String seat = user.getSeat();
@@ -55,6 +55,15 @@ public class UserController {
         }
 
         String userInfo = stringRedisTemplate.opsForValue().get(seat);
+        String[] detailInfo = userInfo.split(",");
+
+        if (detailInfo[BARCOCE].equals(barcode) || stringRedisTemplate.opsForValue().get(barcode) != null) {
+            return ServerResponse.createByErrorCodeMessage(2, "已经留座，请不要重复留座！");
+        }
+        if (stringRedisTemplate.opsForValue().get(seat) != null) {
+            return ServerResponse.createByErrorMessage("该座位有人！");
+        }
+
         if (StringUtils.isBlank(userInfo)) {
             if (stringRedisTemplate.opsForValue().get(barcode) != null) {
                 if (HVAE_SEAT.equals(stringRedisTemplate.opsForValue().get(barcode))
@@ -70,14 +79,7 @@ public class UserController {
             }
             return setStringBySeatAndBarcode(user, personal, 30);
         }
-        String[] detailInfo = userInfo.split(",");
 
-        if (detailInfo[BARCOCE].equals(barcode)) {
-            return ServerResponse.createByErrorCodeMessage(2, "已经留座，请不要重复留座！");
-        }
-        if (stringRedisTemplate.opsForValue().get(seat) != null) {
-            return ServerResponse.createByErrorMessage("该座位有人！");
-        }
         return ServerResponse.createByErrorMessage("留座失败！");
     }
 
@@ -113,7 +115,7 @@ public class UserController {
 
     @PostMapping("/checkOneselfSeat")
     @ResponseBody
-    public ServerResponse checkOneselfSeat(@RequestParam("openId")String openId){
+    public ServerResponse checkOneselfSeat(@RequestParam("openId") String openId) {
         if (StringUtils.isBlank(openId)) {
             return ServerResponse.createByErrorMessage("传值不能为空!");
         }
@@ -125,12 +127,12 @@ public class UserController {
         CopyOnWriteArrayList<User> userList = userInfo.getUserInfo();
         AtomicReference<String> barcode = new AtomicReference<>();
         userList.stream().filter(user -> user.getOpenId().equals(openId)).map(User::getBarcode).forEach(barcode::set);
-        String onselfSeatInfo =  stringRedisTemplate.opsForValue().get(barcode.get());
+        String onselfSeatInfo = stringRedisTemplate.opsForValue().get(barcode.get());
         String[] detailInfo = new String[0];
         if (onselfSeatInfo != null) {
             detailInfo = onselfSeatInfo.split(",");
         }
-        if (onselfSeatInfo == null){
+        if (onselfSeatInfo == null) {
             return ServerResponse.createByErrorMessage("尚未留座！");
         }
         int ttl = 0;

@@ -86,22 +86,22 @@ public class SessionInterceptor implements HandlerInterceptor {
 //            }
 //        }
 //        return responseBoolean;
-        System.out.println("开始请求地址拦截");
-        HttpSession session = request.getSession(false);
-
-        FillterResponse fillterResponse = new FillterResponse();
-        fillterResponse.setStatus(ResponseCode.ERROR.getCode());
-        fillterResponse.setMsg("请先绑定借阅卡！");
-//        String str = "{\"result\":\""  "\",\"text\": \"" "\"}";
-        JSONObject Object = JSONObject.toJSON(str);
-        if (session != null && session.getAttribute("user") != null) {
-            return true;
-        } else {
+//        System.out.println("开始请求地址拦截");
+//        HttpSession session = request.getSession(false);
+//
+//        FillterResponse fillterResponse = new FillterResponse();
+//        fillterResponse.setStatus(ResponseCode.ERROR.getCode());
+//        fillterResponse.setMsg("请先绑定借阅卡！");
+////        String str = "{\"result\":\""  "\",\"text\": \"" "\"}";
+//        JSONObject Object = JSONObject.toJSON(str);
+//        if (session != null && session.getAttribute("user") != null) {
+//            return true;
+//        } else {
             PrintWriter printWriter = response.getWriter();
-            printWriter.write(String.valueOf(fillterResponse));
+           // printWriter.write(String.valueOf(fillterResponse));
             printWriter.flush();
             return false;
-        }
+
 
 
     }
