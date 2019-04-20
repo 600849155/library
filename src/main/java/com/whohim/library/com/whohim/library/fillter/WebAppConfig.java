@@ -1,5 +1,6 @@
 package com.whohim.library.com.whohim.library.fillter;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
@@ -13,15 +14,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 @Configuration
 public class WebAppConfig extends WebMvcConfigurationSupport {
 
-//    /**
-//     * 注册 拦截器
-//     */
-//    @Override
-//    public void addInterceptors(InterceptorRegistry registry) {
-//        // 设置拦截的路径、不拦截的路径、优先级等等
-//        registry.addInterceptor(new SessionInterceptor())
-//                .addPathPatterns("/**")
-//                .excludePathPatterns("/bindLibrary")
-//                .excludePathPatterns("/cancelBindLibrary");
-//    }
+    @Bean
+    public SessionInterceptor sessionInterceptor(){
+        return new SessionInterceptor();
+    }
+
+    /**
+     * 注册 拦截器
+     */
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        // 设置拦截的路径、不拦截的路径、优先级等等
+        registry.addInterceptor(sessionInterceptor())
+                .addPathPatterns("/**")
+                .excludePathPatterns("/bindLibrary")
+                .excludePathPatterns("/cancelBindLibrary");
+    }
+
+
 }

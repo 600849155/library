@@ -43,6 +43,18 @@ public class Constant {
      **/
     public static final int NICKNAME = 4;
 
-    /** 存进redis的user_info表 **/
+    /**
+     * 座位
+     */
+    public static final int SEAT = 5;
+
+    /**
+     * 存进redis的user_info表
+     **/
     public static final String USER_INFO = "user_info";
+
+    /**
+     * 逗号
+     */
+    public static String COMMA = ",";
 }

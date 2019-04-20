@@ -48,22 +48,25 @@ public class UserController {
         String openId = user.getOpenId();
         String avatarUrl = user.getAvatarUrl();
         String nickName = user.getNickName();
-        String personal = DateTimeUtil.dateToStr(new Date(), "yyyy-MM-dd HH:mm:ss") + "," + barcode + "," + openId + "," + avatarUrl + "," + nickName + ",";
+        String personal = DateTimeUtil.dateToStr(new Date(), "yyyy-MM-dd HH:mm:ss") + "," + barcode + "," + openId + "," + avatarUrl + "," + nickName + "," + seat;
 
         if (StringUtils.isBlank(openId) || StringUtils.isBlank(avatarUrl) || StringUtils.isBlank(seat) || StringUtils.isBlank(barcode)) {
             return ServerResponse.createByErrorMessage("参数不能为空!");
         }
 
-        String userInfo = stringRedisTemplate.opsForValue().get(seat);
-        String[] detailInfo = userInfo.split(",");
-
-        if (detailInfo[BARCOCE].equals(barcode) || stringRedisTemplate.opsForValue().get(barcode) != null) {
-            return ServerResponse.createByErrorCodeMessage(2, "已经留座，请不要重复留座！");
+        if (stringRedisTemplate.opsForValue().get(seat) != null && !stringRedisTemplate.opsForValue().get(seat).split(COMMA)[SEAT].equals(seat)) {
+            return ServerResponse.createByErrorMessage("该座位有人！");
         }
+
+        if (stringRedisTemplate.opsForValue().get(barcode) != null) {
+            return ServerResponse.createByErrorCodeMessage(2, "请不要重复留座！");
+        }
+
         if (stringRedisTemplate.opsForValue().get(seat) != null) {
             return ServerResponse.createByErrorMessage("该座位有人！");
         }
 
+        String userInfo = stringRedisTemplate.opsForValue().get(seat);
         if (StringUtils.isBlank(userInfo)) {
             if (stringRedisTemplate.opsForValue().get(barcode) != null) {
                 if (HVAE_SEAT.equals(stringRedisTemplate.opsForValue().get(barcode))
@@ -78,6 +81,11 @@ public class UserController {
                 return setStringBySeatAndBarcode(user, personal, 60);
             }
             return setStringBySeatAndBarcode(user, personal, 30);
+        }
+
+        String[] detailInfo = userInfo.split(",");
+        if (detailInfo[BARCOCE].equals(barcode)) {
+            return ServerResponse.createByErrorCodeMessage(2, "请不要重复留座！");
         }
 
         return ServerResponse.createByErrorMessage("留座失败！");
@@ -173,7 +181,6 @@ public class UserController {
         stringRedisTemplate.delete(seat);
         return ServerResponse.createBySuccessMessage("取消留座成功！");
     }
-
 
     @PostMapping("/bindLibrary")
     @ResponseBody
