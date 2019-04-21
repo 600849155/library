@@ -17,6 +17,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
@@ -77,18 +78,35 @@ public class SessionInterceptor implements HandlerInterceptor {
             if (userList != null && userList.stream().anyMatch((user -> user.getOpenId().equals(openIdList.get(0)[0])))) {
                 hasBeenBind = true;
             }
+        }else {
+            serverResponse(response,404,"请传参!");
+            return false;
         }
 
        /* 沒有綁定過則提示綁定  */
         if (!hasBeenBind) {
-            /* 指定返回的格式为JSON格式 */
+            serverResponse(response,3,"请先绑定借阅卡!");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     *  响应前端
+     * @param response servlet
+     * @param status 状态码
+     * @param msg 信息
+     */
+    private void serverResponse(HttpServletResponse response,int status,String msg){
+        try {
+              /* 指定返回的格式为JSON格式 */
             response.setContentType("application/json;charset=utf-8");
             /* setContentType与setCharacterEncoding的顺序不能调换，否则还是无法解决中文乱码的问题 */
             response.setCharacterEncoding("UTF-8");
             JSONObject jsonObject = new JSONObject() {
                 {
-                    put("status", 3);
-                    put("msg", "请先绑定借阅卡!");
+                    put("status", status);
+                    put("msg", msg);
                     put("data", null);
                     put("success", "false");
                 }
@@ -96,9 +114,10 @@ public class SessionInterceptor implements HandlerInterceptor {
             PrintWriter out = response.getWriter();
             out.write(jsonObject.toString());
             out.close();
-            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return true;
+
     }
 
 

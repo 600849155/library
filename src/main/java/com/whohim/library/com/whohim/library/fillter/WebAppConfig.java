@@ -15,7 +15,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
 public class WebAppConfig extends WebMvcConfigurationSupport {
 
     @Bean
-    public SessionInterceptor sessionInterceptor(){
+    public SessionInterceptor sessionInterceptor() {
         return new SessionInterceptor();
     }
 
@@ -26,9 +26,9 @@ public class WebAppConfig extends WebMvcConfigurationSupport {
     public void addInterceptors(InterceptorRegistry registry) {
         // 设置拦截的路径、不拦截的路径、优先级等等
         registry.addInterceptor(sessionInterceptor())
-                .addPathPatterns("/**")
-                .excludePathPatterns("/bindLibrary")
-                .excludePathPatterns("/cancelBindLibrary");
+                .excludePathPatterns("/user/bindLibrary/", "/user/cancelBindLibrary/", "/user/getSessionkey/")
+                .addPathPatterns("/**");
+        super.addInterceptors(registry);
     }
 
 
